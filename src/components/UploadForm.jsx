@@ -21,8 +21,9 @@ const UploadForm = () => {
   const audioInputRef = useRef(null);
 
   const handleFileChange = (e) => {
-    setFiles([...e.target.files]);
-    handleUpload([...e.target.files]);
+    const selectedFiles = [...e.target.files];
+    setFiles(selectedFiles);
+    handleUpload(selectedFiles);
   };
 
   const handleUpload = (filesToUpload) => {
@@ -49,6 +50,11 @@ const UploadForm = () => {
       default:
         break;
     }
+  };
+
+  const handleCameraCapture = (file) => {
+    setFiles([file]);
+    handleUpload([file]);
   };
 
   return (
@@ -113,10 +119,7 @@ const UploadForm = () => {
       <CameraModal 
         isOpen={isCameraModalOpen} 
         setIsOpen={setIsCameraModalOpen} 
-        onCapture={(file) => {
-          setFiles([...files, file]);
-          handleUpload([file]);
-        }} 
+        onCapture={handleCameraCapture}
       />
     </div>
   );

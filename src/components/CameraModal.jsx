@@ -43,6 +43,10 @@ const CameraModal = ({ isOpen, setIsOpen, onCapture }) => {
       const context = canvasRef.current.getContext('2d');
       context.drawImage(videoRef.current, 0, 0, 640, 480);
       setIsCaptured(true);
+      const dataUrl = canvasRef.current.toDataURL('image/jpeg');
+      const blob = dataURLtoBlob(dataUrl);
+      const file = new File([blob], "captured_photo.jpg", { type: "image/jpeg" });
+      onCapture(file);
     }
   };
 
@@ -56,6 +60,12 @@ const CameraModal = ({ isOpen, setIsOpen, onCapture }) => {
 
   const stopRecording = () => {
     mediaRecorderRef.current.stop();
+    mediaRecorderRef.current.onstop = () => {
+      const blob = new Blob(recordedChunks, { type: 'video/webm' });
+      const file = new File([blob], "recorded_video.webm", { type: "video/webm" });
+      onCapture(file);
+      setIsCaptured(true);
+    };
   };
 
   const handleDataAvailable = (event) => {
@@ -64,44 +74,10 @@ const CameraModal = ({ isOpen, setIsOpen, onCapture }) => {
     }
   };
 
-  const retakePhoto = () => {
+  const retakeMedia = () => {
     setIsCaptured(false);
     setRecordedChunks([]);
     startCamera();
-  };
-
-  const downloadMedia = () => {
-    if (isVideoMode && recordedChunks.length > 0) {
-      const blob = new Blob(recordedChunks, { type: 'video/webm' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      document.body.appendChild(a);
-      a.style = 'display: none';
-      a.href = url;
-      a.download = 'recorded_video.webm';
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } else if (canvasRef.current) {
-      const dataUrl = canvasRef.current.toDataURL('image/jpeg');
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = 'captured_photo.jpg';
-      link.click();
-    }
-  };
-
-  const confirmMedia = () => {
-    if (isVideoMode && recordedChunks.length > 0) {
-      const blob = new Blob(recordedChunks, { type: 'video/webm' });
-      const file = new File([blob], "recorded_video.webm", { type: "video/webm" });
-      onCapture(file);
-    } else if (canvasRef.current) {
-      canvasRef.current.toBlob((blob) => {
-        const file = new File([blob], "captured_photo.jpg", { type: "image/jpeg" });
-        onCapture(file);
-      }, 'image/jpeg');
-    }
-    setIsOpen(false);
   };
 
   const toggleCamera = () => {
@@ -114,6 +90,18 @@ const CameraModal = ({ isOpen, setIsOpen, onCapture }) => {
     setIsCaptured(false);
     setRecordedChunks([]);
     startCamera();
+  };
+
+  const dataURLtoBlob = (dataURL) => {
+    const arr = dataURL.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
   };
 
   useEffect(() => {
@@ -161,9 +149,8 @@ const CameraModal = ({ isOpen, setIsOpen, onCapture }) => {
               </>
             ) : (
               <>
-                <Button onClick={retakePhoto}>ถ่ายใหม่</Button>
-                <Button onClick={confirmMedia}>ยืนยัน</Button>
-                <Button onClick={downloadMedia}><Download className="mr-2 h-4 w-4" /> ดาวน์โหลด</Button>
+                <Button onClick={retakeMedia}>ถ่ายใหม่</Button>
+                <Button onClick={() => setIsOpen(false)}>ยืนยัน</Button>
               </>
             )}
           </div>
