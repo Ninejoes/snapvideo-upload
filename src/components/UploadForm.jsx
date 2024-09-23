@@ -22,11 +22,12 @@ const UploadForm = () => {
 
   const handleFileChange = (e) => {
     setFiles([...e.target.files]);
+    handleUpload([...e.target.files]);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    toast.success(`อัปโหลดไฟล์สำเร็จ ${files.length} ไฟล์`);
+  const handleUpload = (filesToUpload) => {
+    // Simulate upload process
+    toast.success(`อัปโหลดไฟล์สำเร็จ ${filesToUpload.length} ไฟล์`);
     setFiles([]);
   };
 
@@ -51,7 +52,7 @@ const UploadForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="file-upload">เลือกไฟล์ (รูปภาพ, วิดีโอ, หรือไฟล์อื่นๆ)</Label>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -109,9 +110,15 @@ const UploadForm = () => {
           </ul>
         </div>
       )}
-      <Button type="submit" className="w-full mt-4">อัปโหลด</Button>
-      <CameraModal isOpen={isCameraModalOpen} setIsOpen={setIsCameraModalOpen} onCapture={(file) => setFiles([...files, file])} />
-    </form>
+      <CameraModal 
+        isOpen={isCameraModalOpen} 
+        setIsOpen={setIsCameraModalOpen} 
+        onCapture={(file) => {
+          setFiles([...files, file]);
+          handleUpload([file]);
+        }} 
+      />
+    </div>
   );
 };
 
