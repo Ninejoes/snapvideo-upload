@@ -63,7 +63,7 @@ const UploadForm = () => {
         <Label htmlFor="file-upload">เลือกไฟล์ (รูปภาพ, วิดีโอ, หรือไฟล์อื่นๆ)</Label>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button className="w-full">อัปโหลดไฟล์แนบ</Button>
+            <Button className="w-full">เลือกไฟล์แนบ</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
