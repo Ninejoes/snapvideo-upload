@@ -3,12 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Camera } from "lucide-react";
+import { Camera, Upload, Mic, File } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import CameraModal from './CameraModal';
 
 const UploadForm = () => {
   const [files, setFiles] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
   const fileInputRef = useRef(null);
-  const cameraInputRef = useRef(null);
+  const audioInputRef = useRef(null);
 
   const handleFileChange = (e) => {
     setFiles([...e.target.files]);
@@ -20,35 +30,72 @@ const UploadForm = () => {
     setFiles([]);
   };
 
-  const handleCameraClick = () => {
-    cameraInputRef.current.click();
+  const handleUploadOption = (option) => {
+    setIsOpen(false);
+    switch (option) {
+      case 'camera':
+        setIsCameraModalOpen(true);
+        break;
+      case 'photo':
+        fileInputRef.current.click();
+        break;
+      case 'audio':
+        audioInputRef.current.click();
+        break;
+      case 'file':
+        fileInputRef.current.click();
+        break;
+      default:
+        break;
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="file-upload">เลือกไฟล์ (รูปภาพ, วิดีโอ, หรือไฟล์อื่นๆ)</Label>
-        <div className="flex space-x-2">
-          <Input
-            id="file-upload"
-            type="file"
-            onChange={handleFileChange}
-            multiple
-            accept="image/*,video/*,audio/*,application/*"
-            ref={fileInputRef}
-            className="flex-grow"
-          />
-          <Button type="button" onClick={handleCameraClick} className="flex-shrink-0">
-            <Camera className="h-4 w-4 mr-2" />
-            ถ่ายภาพ
-          </Button>
-        </div>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button className="w-full">อัปโหลดไฟล์แนบ</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>เลือกประเภทการอัปโหลด</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-4">
+              <Button onClick={() => handleUploadOption('camera')} className="flex flex-col items-center justify-center h-24">
+                <Camera className="h-8 w-8 mb-2" />
+                ถ่ายภาพหรือวิดีโอ
+              </Button>
+              <Button onClick={() => handleUploadOption('photo')} className="flex flex-col items-center justify-center h-24">
+                <Upload className="h-8 w-8 mb-2" />
+                อัปโหลดภาพหรือวิดีโอ
+              </Button>
+              <Button onClick={() => handleUploadOption('audio')} className="flex flex-col items-center justify-center h-24">
+                <Mic className="h-8 w-8 mb-2" />
+                อัปโหลดไฟล์เสียง
+              </Button>
+              <Button onClick={() => handleUploadOption('file')} className="flex flex-col items-center justify-center h-24">
+                <File className="h-8 w-8 mb-2" />
+                อัปโหลดไฟล์อื่นๆ
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <Input
+          id="file-upload"
+          type="file"
+          onChange={handleFileChange}
+          multiple
+          accept="image/*,video/*,audio/*,application/*"
+          ref={fileInputRef}
+          className="hidden"
+        />
         <Input
           type="file"
-          accept="image/*"
-          capture="environment"
+          accept="audio/*"
           className="hidden"
-          ref={cameraInputRef}
+          ref={audioInputRef}
           onChange={handleFileChange}
         />
       </div>
@@ -63,6 +110,7 @@ const UploadForm = () => {
         </div>
       )}
       <Button type="submit" className="w-full mt-4">อัปโหลด</Button>
+      <CameraModal isOpen={isCameraModalOpen} setIsOpen={setIsCameraModalOpen} onCapture={(file) => setFiles([...files, file])} />
     </form>
   );
 };
