@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Camera, RefreshCw, Download } from "lucide-react";
@@ -8,28 +8,38 @@ const CameraModal = ({ isOpen, setIsOpen, onCapture }) => {
   const canvasRef = useRef(null);
   const [isCaptured, setIsCaptured] = useState(false);
   const [isFrontCamera, setIsFrontCamera] = useState(true);
+  const [stream, setStream] = useState(null);
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      if (stream) {
+        stopCamera();
+      }
+      const newStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: isFrontCamera ? "user" : "environment" }
       });
-      videoRef.current.srcObject = stream;
+      setStream(newStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = newStream;
+      }
     } catch (err) {
       console.error("Error accessing the camera", err);
     }
   };
 
   const stopCamera = () => {
-    const stream = videoRef.current.srcObject;
-    const tracks = stream.getTracks();
-    tracks.forEach(track => track.stop());
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
   };
 
   const capturePhoto = () => {
-    const context = canvasRef.current.getContext('2d');
-    context.drawImage(videoRef.current, 0, 0, 640, 480);
-    setIsCaptured(true);
+    if (videoRef.current && canvasRef.current) {
+      const context = canvasRef.current.getContext('2d');
+      context.drawImage(videoRef.current, 0, 0, 640, 480);
+      setIsCaptured(true);
+    }
   };
 
   const retakePhoto = () => {
@@ -38,35 +48,41 @@ const CameraModal = ({ isOpen, setIsOpen, onCapture }) => {
   };
 
   const downloadPhoto = () => {
-    const dataUrl = canvasRef.current.toDataURL('image/jpeg');
-    const link = document.createElement('a');
-    link.href = dataUrl;
-    link.download = 'captured_photo.jpg';
-    link.click();
+    if (canvasRef.current) {
+      const dataUrl = canvasRef.current.toDataURL('image/jpeg');
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = 'captured_photo.jpg';
+      link.click();
+    }
   };
 
   const confirmPhoto = () => {
-    canvasRef.current.toBlob((blob) => {
-      const file = new File([blob], "captured_photo.jpg", { type: "image/jpeg" });
-      onCapture(file);
-      setIsOpen(false);
-    }, 'image/jpeg');
+    if (canvasRef.current) {
+      canvasRef.current.toBlob((blob) => {
+        const file = new File([blob], "captured_photo.jpg", { type: "image/jpeg" });
+        onCapture(file);
+        setIsOpen(false);
+      }, 'image/jpeg');
+    }
   };
 
   const toggleCamera = () => {
     setIsFrontCamera(!isFrontCamera);
-    stopCamera();
     startCamera();
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       startCamera();
     } else {
       stopCamera();
       setIsCaptured(false);
     }
-  }, [isOpen]);
+    return () => {
+      stopCamera();
+    };
+  }, [isOpen, isFrontCamera]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
